@@ -85,12 +85,30 @@
                     <label for="password" style="display: block; font-weight: 600; font-size: 0.88rem; color: var(--color-deep-forest); margin-bottom: 0.4rem;">
                         Kata Sandi <span style="color: #B83B26;">*</span>
                     </label>
-                    <input type="password" 
-                           id="password" 
-                           name="password" 
-                           placeholder="••••••••" 
-                           required 
-                           style="width: 100%; padding: 0.75rem 1rem; border: 1px solid {{ $errors->has('password') ? '#B83B26' : 'var(--color-border-subtle)' }}; border-radius: 8px; font-size: 0.95rem; background: #FAF9F5;">
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <input type="password" 
+                               id="password" 
+                               name="password" 
+                               placeholder="••••••••" 
+                               required 
+                               style="width: 100%; padding: 0.75rem 2.85rem 0.75rem 1rem; border: 1px solid {{ $errors->has('password') ? '#B83B26' : 'var(--color-border-subtle)' }}; border-radius: 8px; font-size: 0.95rem; background: #FAF9F5; box-sizing: border-box;">
+                        <button type="button" 
+                                id="togglePassword" 
+                                aria-label="Lihat kata sandi" 
+                                title="Lihat kata sandi"
+                                style="position: absolute; right: 0.75rem; background: none; border: none; cursor: pointer; padding: 0.35rem; color: #6D7870; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: color 0.15s ease;">
+                            <!-- Eye Icon (saat password tersembunyi) -->
+                            <svg id="eyeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <!-- Eye Off Icon (saat password terlihat) -->
+                            <svg id="eyeOffIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
+                    </div>
                     @error('password')
                         <span style="font-size: 0.78rem; color: #B83B26; margin-top: 0.35rem; display: block;">{{ $message }}</span>
                     @enderror
@@ -131,5 +149,34 @@
         </span>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const passwordInput = document.getElementById('password');
+            const toggleBtn = document.getElementById('togglePassword');
+            const eyeIcon = document.getElementById('eyeIcon');
+            const eyeOffIcon = document.getElementById('eyeOffIcon');
+
+            if (toggleBtn && passwordInput) {
+                toggleBtn.addEventListener('click', function () {
+                    const isPassword = passwordInput.getAttribute('type') === 'password';
+                    if (isPassword) {
+                        passwordInput.setAttribute('type', 'text');
+                        eyeIcon.style.display = 'none';
+                        eyeOffIcon.style.display = 'block';
+                        toggleBtn.setAttribute('title', 'Sembunyikan kata sandi');
+                        toggleBtn.setAttribute('aria-label', 'Sembunyikan kata sandi');
+                        toggleBtn.style.color = 'var(--color-deep-forest)';
+                    } else {
+                        passwordInput.setAttribute('type', 'password');
+                        eyeIcon.style.display = 'block';
+                        eyeOffIcon.style.display = 'none';
+                        toggleBtn.setAttribute('title', 'Lihat kata sandi');
+                        toggleBtn.setAttribute('aria-label', 'Lihat kata sandi');
+                        toggleBtn.style.color = '#6D7870';
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>
