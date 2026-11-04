@@ -586,14 +586,15 @@ document.addEventListener('DOMContentLoaded', function () {
         return await res.json();
     }
 
-    // Load Daftar Seluruh Provinsi di Indonesia
+    // Load Daftar Provinsi Kalimantan
+    // Menggunakan URL relatif agar berfungsi di semua environment (localhost & production)
     async function initProvinces() {
         if (!provinceSelect) return;
         if (provinceLoading) provinceLoading.style.display = 'inline-block';
         showGlobalLoading(true);
 
         try {
-            const data = await fetchApi('{{ route('api.wilayah.provinces') }}');
+            const data = await fetchApi('/api/wilayah/provinces');
             provinceSelect.innerHTML = '<option value="" disabled selected>Pilih Provinsi di Kalimantan</option>';
 
             data.forEach(item => {
