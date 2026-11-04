@@ -31,6 +31,14 @@ Route::get('/berita/api', [NewsController::class, 'apiData'])->name('berita.api'
 Route::get('/pengaduan', [ReportController::class, 'create'])->name('pengaduan');
 Route::post('/pengaduan', [ReportController::class, 'store'])->middleware('throttle:10,1')->name('pengaduan.store');
 
+// API Wilayah Administratif Indonesia (Dependent Dropdown Formulir Laporan)
+Route::prefix('api/wilayah')->group(function () {
+    Route::get('/provinces', [\App\Http\Controllers\RegionAreaController::class, 'provinces'])->name('api.wilayah.provinces');
+    Route::get('/regencies/{provinceCode}', [\App\Http\Controllers\RegionAreaController::class, 'regencies'])->name('api.wilayah.regencies');
+    Route::get('/districts/{regencyCode}', [\App\Http\Controllers\RegionAreaController::class, 'districts'])->name('api.wilayah.districts');
+    Route::get('/villages/{districtCode}', [\App\Http\Controllers\RegionAreaController::class, 'villages'])->name('api.wilayah.villages');
+});
+
 Route::get('/lacak-pengaduan', [TrackReportController::class, 'show'])->name('lacak.pengaduan');
 Route::post('/lacak-pengaduan', [TrackReportController::class, 'track'])->middleware('throttle:20,1')->name('lacak.pengaduan.track');
 

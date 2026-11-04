@@ -221,11 +221,22 @@
                                 Lokasi Kejadian
                             </span>
                             <div style="font-weight: 600; font-size: 1.05rem; color: var(--color-deep-forest);">
-                                {{ $trackedReport->incident_location }}
+                                {{ $trackedReport->location_detail ?: $trackedReport->incident_location }}
                             </div>
-                            @if($trackedReport->province || $trackedReport->regency)
+                            @php
+                                $locHierarchy = [];
+                                $vName = $trackedReport->village_name ?: $trackedReport->village;
+                                $dName = $trackedReport->district_name ?: $trackedReport->district;
+                                $rName = $trackedReport->regency_name ?: $trackedReport->regency;
+                                $pName = $trackedReport->province_name ?: $trackedReport->province;
+                                if ($vName) $locHierarchy[] = 'Desa ' . $vName;
+                                if ($dName) $locHierarchy[] = 'Kec. ' . $dName;
+                                if ($rName) $locHierarchy[] = $rName;
+                                if ($pName) $locHierarchy[] = $pName;
+                            @endphp
+                            @if(count($locHierarchy) > 0)
                                 <span style="font-size: 0.8rem; color: #647065; display: block; margin-top: 0.2rem;">
-                                    {{ $trackedReport->regency ? $trackedReport->regency . ', ' : '' }}{{ $trackedReport->province }}
+                                    {{ implode(', ', $locHierarchy) }}
                                 </span>
                             @endif
                         </div>

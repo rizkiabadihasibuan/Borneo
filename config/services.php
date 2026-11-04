@@ -53,6 +53,10 @@ return [
     ],
 
     'news' => [
+        'api_keys' => array_filter([
+            env('NEWS_API_KEY_1'),
+            env('NEWS_API_KEY_2'),
+        ]),
         'cache_ttl' => (int) env('NEWS_CACHE_TTL', 900),
         'default_query' => env('NEWS_DEFAULT_QUERY', 'karhutla kalimantan'),
     ],

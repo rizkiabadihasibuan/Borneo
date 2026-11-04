@@ -149,12 +149,24 @@
                     
                     <!-- Sisi Kiri: Editorial Visual / Hero Canvas -->
                     <div style="background: linear-gradient(135deg, #1A2921 0%, #263B30 65%, #344F41 100%); padding: 3rem 2.5rem; color: var(--color-warm-paper); display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;">
-                        <!-- Subtle Background Badge -->
-                        <div style="position: absolute; right: -25px; bottom: -25px; opacity: 0.08; pointer-events: none;">
-                            <svg width="240" height="240" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon></svg>
-                        </div>
+                        <!-- Gambar thumbnail artikel jika tersedia -->
+                        @if(!empty($leadItem['image']))
+                            <div style="position: absolute; inset: 0; z-index: 0;">
+                                <img src="{{ $leadItem['image'] }}" 
+                                     alt="Ilustrasi berita: {{ $leadItem['title'] }}"
+                                     loading="lazy"
+                                     onerror="this.parentElement.style.display='none'"
+                                     style="width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0.25;">
+                                <div style="position: absolute; inset: 0; background: linear-gradient(135deg, rgba(26,41,33,0.92) 0%, rgba(38,59,48,0.85) 100%);"></div>
+                            </div>
+                        @else
+                            <!-- Subtle Background Badge fallback -->
+                            <div style="position: absolute; right: -25px; bottom: -25px; opacity: 0.08; pointer-events: none;">
+                                <svg width="240" height="240" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon></svg>
+                            </div>
+                        @endif
 
-                        <div>
+                        <div style="position: relative; z-index: 1;">
                             <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
                                 <span style="background: rgba(214, 197, 163, 0.2); border: 1px solid rgba(214, 197, 163, 0.4); color: var(--color-earth-sand); padding: 0.3rem 0.8rem; border-radius: 999px; font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">
                                     SOROTAN UTAMA
@@ -182,7 +194,7 @@
                             </p>
                         </div>
 
-                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid rgba(214, 197, 163, 0.2);">
+                        <div style="position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid rgba(214, 197, 163, 0.2);">
                             <span style="font-size: 0.82rem; color: #B9C9BF;">
                                 Diterbitkan: {{ $leadItem['published_formatted'] }}
                             </span>
@@ -254,6 +266,18 @@
                     @foreach($remainingItems as $item)
                         <article class="article-editorial-card" style="display: flex; flex-direction: column; height: 100%; background: #FFFFFF; border: 1px solid var(--color-border-subtle); border-radius: 12px; overflow: hidden; box-shadow: 0 3px 14px rgba(0,0,0,0.03); transition: transform 0.2s ease, box-shadow 0.2s ease;">
                             
+                            <!-- Gambar Thumbnail Artikel -->
+                            <div style="height: 175px; overflow: hidden; position: relative; background: #ECE8DC;">
+                                <img src="{{ $item['image'] ?? asset('images/news-karhutla-fire.jpg') }}"
+                                     alt="Ilustrasi berita {{ $item['topic'] }}"
+                                     loading="lazy"
+                                     onerror="this.src='{{ asset('images/news-karhutla-fire.jpg') }}'"
+                                     style="width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.35s ease;"
+                                     onmouseover="this.style.transform='scale(1.04)'"
+                                     onmouseout="this.style.transform='scale(1)'">
+                                <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: linear-gradient(to top, rgba(255,255,255,0.9), transparent);"></div>
+                            </div>
+
                             <!-- Card Header: Topic & Region -->
                             <div style="padding: 1.25rem 1.5rem 0.75rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                                 <span class="badge" style="background-color: {{ $item['topic_color'] }}15; color: {{ $item['topic_color'] }}; border: 1px solid {{ $item['topic_color'] }}30; font-size: 0.74rem;">

@@ -90,10 +90,10 @@
                             </span>
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; font-size: 0.85rem; color: #3E4640;">
                                 <div><strong>Nama Pelapor:</strong> {{ session('report_summary.reporter_name') }}</div>
-                                <div><strong>Wilayah:</strong> {{ session('report_summary.regency') }}, {{ session('report_summary.province') }}</div>
+                                <div><strong>Wilayah:</strong> {{ session('report_summary.village') ? 'Desa ' . session('report_summary.village') . ', ' : '' }}{{ session('report_summary.district') ? 'Kec. ' . session('report_summary.district') . ', ' : '' }}{{ session('report_summary.regency') }}, {{ session('report_summary.province') }}</div>
                                 <div><strong>Jenis Kejadian:</strong> {{ session('report_summary.incident_type') }}</div>
                                 <div><strong>Waktu Kejadian:</strong> {{ date('d M Y, H:i', strtotime(session('report_summary.incident_time'))) }} WIB</div>
-                                <div style="grid-column: 1 / -1;"><strong>Lokasi:</strong> {{ session('report_summary.incident_location') }}</div>
+                                <div style="grid-column: 1 / -1;"><strong>Lokasi / Patokan:</strong> {{ session('report_summary.location_detail') ?: session('report_summary.incident_location') }}</div>
                                 <div><strong>Status Awal:</strong> <span class="badge badge-sand" style="color: #935B0D; border-color: #D4AC0D;">{{ session('report_summary.status') }}</span></div>
                                 <div><strong>Foto Bukti:</strong> {{ session('report_summary.has_photo') ? 'Tersimpan (Privat Server)' : 'Tidak Dilampirkan' }}</div>
                             </div>
@@ -193,103 +193,149 @@
                     </div>
                 </div>
 
-                <!-- SEKSI 2: WILAYAH ADMINISTRASI -->
+                <!-- SEKSI 2: LOKASI KEJADIAN KEBAKARAN -->
                 <div style="margin-bottom: 2rem;">
-                    <h4 style="font-size: 1.05rem; color: var(--color-deep-forest); margin-bottom: 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--color-border-subtle);">
-                        2. Wilayah Administrasi Kejadian
-                    </h4>
+                    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--color-border-subtle); flex-wrap: wrap; gap: 0.5rem;">
+                        <h4 style="font-size: 1.05rem; color: var(--color-deep-forest); margin: 0;">
+                            2. Lokasi Kejadian Kebakaran
+                        </h4>
+                        <span id="regionLoadingGlobal" style="display: none; font-size: 0.78rem; color: var(--color-forest-moss); align-items: center; gap: 0.35rem;">
+                            <svg class="spin-animation" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                            <span>Memuat data wilayah...</span>
+                        </span>
+                    </div>
+
+                    <!-- Hidden inputs untuk menyimpan Nama & Kode Wilayah serta sinkronisasi database -->
+                    <input type="hidden" id="province_name" name="province_name" value="{{ old('province_name', old('province')) }}">
+                    <input type="hidden" id="province_input" name="province" value="{{ old('province', old('province_name')) }}">
+
+                    <input type="hidden" id="regency_name" name="regency_name" value="{{ old('regency_name', old('regency')) }}">
+                    <input type="hidden" id="regency_input" name="regency" value="{{ old('regency', old('regency_name')) }}">
+
+                    <input type="hidden" id="district_name" name="district_name" value="{{ old('district_name', old('district')) }}">
+                    <input type="hidden" id="district_input" name="district" value="{{ old('district', old('district_name')) }}">
+
+                    <input type="hidden" id="village_name" name="village_name" value="{{ old('village_name', old('village')) }}">
+                    <input type="hidden" id="village_input" name="village" value="{{ old('village', old('village_name')) }}">
+
+                    <!-- Urutan 1 & 2: Provinsi dan Kabupaten/Kota -->
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
-                        <!-- Provinsi -->
+                        <!-- 1. Provinsi -->
                         <div>
-                            <label for="province" style="display: block; font-weight: 600; font-size: 0.9rem; color: var(--color-deep-forest); margin-bottom: 0.4rem;">
-                                Provinsi <span style="color: #B83B26;">*</span>
-                            </label>
-                            <select id="province" 
-                                    name="province" 
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                                <label for="province_code" style="font-weight: 600; font-size: 0.9rem; color: var(--color-deep-forest);">
+                                    1. Provinsi <span style="color: #B83B26;">*</span>
+                                </label>
+                                <span id="provinceLoading" style="display: none; font-size: 0.74rem; color: var(--color-forest-moss);">
+                                    <svg class="spin-animation" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Memuat...
+                                </span>
+                            </div>
+                            <select id="province_code" 
+                                    name="province_code" 
                                     required 
-                                    style="width: 100%; padding: 0.75rem 1rem; border: 1px solid {{ $errors->has('province') ? '#B83B26' : 'var(--color-border-subtle)' }}; border-radius: 8px; font-family: var(--font-body); font-size: 0.92rem; background: #FAF9F5; color: var(--color-charcoal);">
-                                <option value="" disabled {{ old('province') ? '' : 'selected' }}>Pilih Provinsi Kalimantan</option>
-                                <option value="Kalimantan Barat" {{ old('province') === 'Kalimantan Barat' ? 'selected' : '' }}>Kalimantan Barat</option>
-                                <option value="Kalimantan Tengah" {{ old('province') === 'Kalimantan Tengah' ? 'selected' : '' }}>Kalimantan Tengah</option>
-                                <option value="Kalimantan Selatan" {{ old('province') === 'Kalimantan Selatan' ? 'selected' : '' }}>Kalimantan Selatan</option>
-                                <option value="Kalimantan Timur" {{ old('province') === 'Kalimantan Timur' ? 'selected' : '' }}>Kalimantan Timur</option>
-                                <option value="Kalimantan Utara" {{ old('province') === 'Kalimantan Utara' ? 'selected' : '' }}>Kalimantan Utara</option>
+                                    data-old-val="{{ old('province_code') }}"
+                                    data-old-name="{{ old('province_name', old('province')) }}"
+                                    style="width: 100%; padding: 0.75rem 1rem; border: 1px solid {{ $errors->has('province') || $errors->has('province_code') ? '#B83B26' : 'var(--color-border-subtle)' }}; border-radius: 8px; font-family: var(--font-body); font-size: 0.92rem; background: #FAF9F5; color: var(--color-charcoal);">
+                                <option value="" disabled selected>Pilih Provinsi di Kalimantan</option>
                             </select>
                             @error('province')
                                 <span style="font-size: 0.78rem; color: #B83B26; margin-top: 0.3rem; display: block;">{{ $message }}</span>
                             @enderror
                         </div>
 
-                        <!-- Kabupaten / Kota -->
+                        <!-- 2. Kabupaten / Kota -->
                         <div>
-                            <label for="regency" style="display: block; font-weight: 600; font-size: 0.9rem; color: var(--color-deep-forest); margin-bottom: 0.4rem;">
-                                Kabupaten / Kota <span style="color: #B83B26;">*</span>
-                            </label>
-                            <input type="text" 
-                                   id="regency" 
-                                   name="regency" 
-                                   value="{{ old('regency') }}" 
-                                   placeholder="Contoh: Kab. Kubu Raya" 
-                                   required 
-                                   style="width: 100%; padding: 0.75rem 1rem; border: 1px solid {{ $errors->has('regency') ? '#B83B26' : 'var(--color-border-subtle)' }}; border-radius: 8px; font-family: var(--font-body); font-size: 0.92rem; background: #FAF9F5;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                                <label for="regency_code" style="font-weight: 600; font-size: 0.9rem; color: var(--color-deep-forest);">
+                                    2. Kabupaten / Kota <span style="color: #B83B26;">*</span>
+                                </label>
+                                <span id="regencyLoading" style="display: none; font-size: 0.74rem; color: var(--color-forest-moss);">
+                                    <svg class="spin-animation" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Memuat...
+                                </span>
+                            </div>
+                            <select id="regency_code" 
+                                    name="regency_code" 
+                                    required 
+                                    disabled
+                                    data-old-val="{{ old('regency_code') }}"
+                                    data-old-name="{{ old('regency_name', old('regency')) }}"
+                                    style="width: 100%; padding: 0.75rem 1rem; border: 1px solid {{ $errors->has('regency') || $errors->has('regency_code') ? '#B83B26' : 'var(--color-border-subtle)' }}; border-radius: 8px; font-family: var(--font-body); font-size: 0.92rem; background: #FAF9F5; color: var(--color-charcoal);">
+                                <option value="" disabled selected>Pilih Provinsi terlebih dahulu</option>
+                            </select>
                             @error('regency')
                                 <span style="font-size: 0.78rem; color: #B83B26; margin-top: 0.3rem; display: block;">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem;">
-                        <!-- Kecamatan (Opsional) -->
+                    <!-- Urutan 3 & 4: Kecamatan dan Desa/Kelurahan -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
+                        <!-- 3. Kecamatan -->
                         <div>
-                            <label for="district" style="display: block; font-weight: 600; font-size: 0.9rem; color: var(--color-deep-forest); margin-bottom: 0.4rem;">
-                                Kecamatan <span style="font-size: 0.78rem; color: #69766C; font-weight: 400;">(Opsional)</span>
-                            </label>
-                            <input type="text" 
-                                   id="district" 
-                                   name="district" 
-                                   value="{{ old('district') }}" 
-                                   placeholder="Contoh: Kec. Rasau Jaya" 
-                                   style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--color-border-subtle); border-radius: 8px; font-family: var(--font-body); font-size: 0.92rem; background: #FAF9F5;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                                <label for="district_code" style="font-weight: 600; font-size: 0.9rem; color: var(--color-deep-forest);">
+                                    3. Kecamatan <span style="color: #B83B26;">*</span>
+                                </label>
+                                <span id="districtLoading" style="display: none; font-size: 0.74rem; color: var(--color-forest-moss);">
+                                    <svg class="spin-animation" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Memuat...
+                                </span>
+                            </div>
+                            <select id="district_code" 
+                                    name="district_code" 
+                                    required 
+                                    disabled
+                                    data-old-val="{{ old('district_code') }}"
+                                    data-old-name="{{ old('district_name', old('district')) }}"
+                                    style="width: 100%; padding: 0.75rem 1rem; border: 1px solid {{ $errors->has('district') || $errors->has('district_code') ? '#B83B26' : 'var(--color-border-subtle)' }}; border-radius: 8px; font-family: var(--font-body); font-size: 0.92rem; background: #FAF9F5; color: var(--color-charcoal);">
+                                <option value="" disabled selected>Pilih Kab/Kota terlebih dahulu</option>
+                            </select>
+                            @error('district')
+                                <span style="font-size: 0.78rem; color: #B83B26; margin-top: 0.3rem; display: block;">{{ $message }}</span>
+                            @enderror
                         </div>
 
-                        <!-- Desa / Kelurahan (Opsional) -->
+                        <!-- 4. Desa / Kelurahan -->
                         <div>
-                            <label for="village" style="display: block; font-weight: 600; font-size: 0.9rem; color: var(--color-deep-forest); margin-bottom: 0.4rem;">
-                                Desa / Kelurahan <span style="font-size: 0.78rem; color: #69766C; font-weight: 400;">(Opsional)</span>
-                            </label>
-                            <input type="text" 
-                                   id="village" 
-                                   name="village" 
-                                   value="{{ old('village') }}" 
-                                   placeholder="Contoh: Desa Rasau Jaya Tiga" 
-                                   style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--color-border-subtle); border-radius: 8px; font-family: var(--font-body); font-size: 0.92rem; background: #FAF9F5;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                                <label for="village_code" style="font-weight: 600; font-size: 0.9rem; color: var(--color-deep-forest);">
+                                    4. Desa / Kelurahan <span style="color: #B83B26;">*</span>
+                                </label>
+                                <span id="villageLoading" style="display: none; font-size: 0.74rem; color: var(--color-forest-moss);">
+                                    <svg class="spin-animation" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Memuat...
+                                </span>
+                            </div>
+                            <select id="village_code" 
+                                    name="village_code" 
+                                    required 
+                                    disabled
+                                    data-old-val="{{ old('village_code') }}"
+                                    data-old-name="{{ old('village_name', old('village')) }}"
+                                    style="width: 100%; padding: 0.75rem 1rem; border: 1px solid {{ $errors->has('village') || $errors->has('village_code') ? '#B83B26' : 'var(--color-border-subtle)' }}; border-radius: 8px; font-family: var(--font-body); font-size: 0.92rem; background: #FAF9F5; color: var(--color-charcoal);">
+                                <option value="" disabled selected>Pilih Kecamatan terlebih dahulu</option>
+                            </select>
+                            @error('village')
+                                <span style="font-size: 0.78rem; color: #B83B26; margin-top: 0.3rem; display: block;">{{ $message }}</span>
+                            @enderror
                         </div>
                     </div>
-                </div>
 
-                <!-- SEKSI 3: LOKASI KEJADIAN & KOORDINAT -->
-                <div style="margin-bottom: 2rem;">
-                    <h4 style="font-size: 1.05rem; color: var(--color-deep-forest); margin-bottom: 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--color-border-subtle);">
-                        3. Lokasi Spesifik Kejadian
-                    </h4>
-
-                    <!-- Alamat / Patokan Lokasi -->
+                    <!-- 5. Detail Lokasi Kejadian (Opsional) -->
                     <div style="margin-bottom: 1.25rem;">
-                        <label for="incident_location" style="display: block; font-weight: 600; font-size: 0.9rem; color: var(--color-deep-forest); margin-bottom: 0.4rem;">
-                            Alamat / Keterangan Patokan Lokasi <span style="color: #B83B26;">*</span>
+                        <label for="location_detail" style="display: block; font-weight: 600; font-size: 0.9rem; color: var(--color-deep-forest); margin-bottom: 0.4rem;">
+                            5. Detail Patokan Lokasi Kejadian <span style="font-size: 0.78rem; color: #69766C; font-weight: 400;">(Opsional)</span>
                         </label>
                         <input type="text" 
-                               id="incident_location" 
-                               name="incident_location" 
-                               value="{{ old('incident_location') }}" 
-                               placeholder="Contoh: Jl. Poros Desa RT 04 RW 02, sekitar 300 meter di belakang batas kanal sawit" 
-                               required 
-                               style="width: 100%; padding: 0.75rem 1rem; border: 1px solid {{ $errors->has('incident_location') ? '#B83B26' : 'var(--color-border-subtle)' }}; border-radius: 8px; font-family: var(--font-body); font-size: 0.92rem; background: #FAF9F5;">
+                               id="location_detail" 
+                               name="location_detail" 
+                               value="{{ old('location_detail', old('incident_location')) }}" 
+                               placeholder="Contoh: Jl. Poros RT 04 RW 02, sekitar 300 meter di belakang batas kanal sawit / dekat jembatan kayu" 
+                               style="width: 100%; padding: 0.75rem 1rem; border: 1px solid {{ $errors->has('incident_location') || $errors->has('location_detail') ? '#B83B26' : 'var(--color-border-subtle)' }}; border-radius: 8px; font-family: var(--font-body); font-size: 0.92rem; background: #FAF9F5;">
+                        <input type="hidden" id="incident_location" name="incident_location" value="{{ old('incident_location', old('location_detail')) }}">
                         @error('incident_location')
                             <span style="font-size: 0.78rem; color: #B83B26; margin-top: 0.3rem; display: block;">{{ $message }}</span>
                         @else
                             <span style="font-size: 0.78rem; color: #69766C; margin-top: 0.3rem; display: block;">
-                                Tuliskan nama jalan, patokan jembatan, batas parit/kanal, atau arah dari pemukiman warga terdekat.
+                                Tuliskan patokan jembatan, parit batas konsesi, nama jalan, atau arah dari pemukiman warga terdekat.
                             </span>
                         @enderror
                     </div>
@@ -343,10 +389,10 @@
                     </div>
                 </div>
 
-                <!-- SEKSI 4: WAKTU & KARAKTERISTIK KEBAKARAN -->
+                <!-- SEKSI 3: WAKTU & KARAKTERISTIK KEBAKARAN -->
                 <div style="margin-bottom: 2rem;">
                     <h4 style="font-size: 1.05rem; color: var(--color-deep-forest); margin-bottom: 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--color-border-subtle);">
-                        4. Waktu & Karakteristik Kejadian
+                        3. Waktu & Karakteristik Kejadian
                     </h4>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
                         <!-- Tanggal & Waktu Kejadian -->
@@ -479,9 +525,375 @@
 </section>
 @endsection
 
+@push('styles')
+<style>
+@keyframes spin { 100% { transform: rotate(360deg); } }
+.spin-animation { display: inline-block; animation: spin 0.8s linear infinite; vertical-align: middle; }
+.region-select-loading { background-color: #F3F4F6 !important; opacity: 0.85; cursor: wait; }
+</style>
+@endpush
+
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // 1. Elements Wilayah Bertingkat
+    const provinceSelect = document.getElementById('province_code');
+    const provinceNameInput = document.getElementById('province_name');
+    const provinceInput = document.getElementById('province_input');
+    const provinceLoading = document.getElementById('provinceLoading');
+
+    const regencySelect = document.getElementById('regency_code');
+    const regencyNameInput = document.getElementById('regency_name');
+    const regencyInput = document.getElementById('regency_input');
+    const regencyLoading = document.getElementById('regencyLoading');
+
+    const districtSelect = document.getElementById('district_code');
+    const districtNameInput = document.getElementById('district_name');
+    const districtInput = document.getElementById('district_input');
+    const districtLoading = document.getElementById('districtLoading');
+
+    const villageSelect = document.getElementById('village_code');
+    const villageNameInput = document.getElementById('village_name');
+    const villageInput = document.getElementById('village_input');
+    const villageLoading = document.getElementById('villageLoading');
+
+    const locationDetail = document.getElementById('location_detail');
+    const incidentLocation = document.getElementById('incident_location');
+    const regionLoadingGlobal = document.getElementById('regionLoadingGlobal');
+    const formPengaduan = document.getElementById('formPengaduan');
+
+    // Nilai awal jika reload setelah error validasi
+    const oldProvinceVal = provinceSelect ? (provinceSelect.dataset.oldVal || '') : '';
+    const oldProvinceName = provinceSelect ? (provinceSelect.dataset.oldName || '') : '';
+    const oldRegencyVal = regencySelect ? (regencySelect.dataset.oldVal || '') : '';
+    const oldRegencyName = regencySelect ? (regencySelect.dataset.oldName || '') : '';
+    const oldDistrictVal = districtSelect ? (districtSelect.dataset.oldVal || '') : '';
+    const oldDistrictName = districtSelect ? (districtSelect.dataset.oldName || '') : '';
+    const oldVillageVal = villageSelect ? (villageSelect.dataset.oldVal || '') : '';
+    const oldVillageName = villageSelect ? (villageSelect.dataset.oldName || '') : '';
+
+    function showGlobalLoading(show) {
+        if (regionLoadingGlobal) {
+            regionLoadingGlobal.style.display = show ? 'inline-flex' : 'none';
+        }
+    }
+
+    async function fetchApi(url) {
+        const res = await fetch(url, {
+            headers: { 'Accept': 'application/json' }
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return await res.json();
+    }
+
+    // Load Daftar Seluruh Provinsi di Indonesia
+    async function initProvinces() {
+        if (!provinceSelect) return;
+        if (provinceLoading) provinceLoading.style.display = 'inline-block';
+        showGlobalLoading(true);
+
+        try {
+            const data = await fetchApi('{{ route('api.wilayah.provinces') }}');
+            provinceSelect.innerHTML = '<option value="" disabled selected>Pilih Provinsi di Kalimantan</option>';
+
+            data.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.id;
+                opt.textContent = item.name;
+                opt.dataset.name = item.name;
+                provinceSelect.appendChild(opt);
+            });
+
+            // Pulihkan old value jika ada
+            if (oldProvinceVal || oldProvinceName) {
+                let match = Array.from(provinceSelect.options).find(o => 
+                    (oldProvinceVal && o.value === oldProvinceVal) || 
+                    (oldProvinceName && o.dataset.name && o.dataset.name.toLowerCase() === oldProvinceName.toLowerCase())
+                );
+                if (match) {
+                    provinceSelect.value = match.value;
+                    provinceNameInput.value = match.dataset.name || match.text;
+                    provinceInput.value = provinceNameInput.value;
+                    loadRegencies(match.value, oldRegencyVal, oldRegencyName);
+                }
+            }
+        } catch (err) {
+            console.error('Gagal memuat provinsi:', err);
+            provinceSelect.innerHTML = '<option value="" disabled selected>Gagal memuat daftar provinsi. Muat ulang halaman.</option>';
+        } finally {
+            if (provinceLoading) provinceLoading.style.display = 'none';
+            showGlobalLoading(false);
+        }
+    }
+
+    // Load Daftar Kabupaten / Kota berdasarkan Provinsi
+    async function loadRegencies(provinceId, autoSelectVal = '', autoSelectName = '') {
+        if (!regencySelect) return;
+        regencySelect.disabled = true;
+        regencySelect.classList.add('region-select-loading');
+        regencySelect.innerHTML = '<option value="" disabled selected>Memuat daftar kabupaten/kota...</option>';
+        if (regencyLoading) regencyLoading.style.display = 'inline-block';
+        showGlobalLoading(true);
+
+        resetDistrict();
+        resetVillage();
+
+        try {
+            const data = await fetchApi('/api/wilayah/regencies/' + encodeURIComponent(provinceId));
+            regencySelect.innerHTML = '<option value="" disabled selected>Pilih Kabupaten / Kota</option>';
+
+            data.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.id;
+                opt.textContent = item.name;
+                opt.dataset.name = item.name;
+                regencySelect.appendChild(opt);
+            });
+
+            regencySelect.disabled = false;
+            regencySelect.classList.remove('region-select-loading');
+
+            if (autoSelectVal || autoSelectName) {
+                let match = Array.from(regencySelect.options).find(o => 
+                    (autoSelectVal && o.value === autoSelectVal) || 
+                    (autoSelectName && o.dataset.name && o.dataset.name.toLowerCase() === autoSelectName.toLowerCase())
+                );
+                if (match) {
+                    regencySelect.value = match.value;
+                    regencyNameInput.value = match.dataset.name || match.text;
+                    regencyInput.value = regencyNameInput.value;
+                    loadDistricts(match.value, oldDistrictVal, oldDistrictName);
+                }
+            }
+        } catch (err) {
+            console.error('Gagal memuat kabupaten/kota:', err);
+            regencySelect.innerHTML = '<option value="" disabled selected>Gagal memuat data kab/kota. Coba lagi.</option>';
+        } finally {
+            if (regencyLoading) regencyLoading.style.display = 'none';
+            showGlobalLoading(false);
+        }
+    }
+
+    // Load Daftar Kecamatan berdasarkan Kabupaten/Kota
+    async function loadDistricts(regencyId, autoSelectVal = '', autoSelectName = '') {
+        if (!districtSelect) return;
+        districtSelect.disabled = true;
+        districtSelect.classList.add('region-select-loading');
+        districtSelect.innerHTML = '<option value="" disabled selected>Memuat daftar kecamatan...</option>';
+        if (districtLoading) districtLoading.style.display = 'inline-block';
+        showGlobalLoading(true);
+
+        resetVillage();
+
+        try {
+            const data = await fetchApi('/api/wilayah/districts/' + encodeURIComponent(regencyId));
+            districtSelect.innerHTML = '<option value="" disabled selected>Pilih Kecamatan</option>';
+
+            data.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.id;
+                opt.textContent = item.name;
+                opt.dataset.name = item.name;
+                districtSelect.appendChild(opt);
+            });
+
+            districtSelect.disabled = false;
+            districtSelect.classList.remove('region-select-loading');
+
+            if (autoSelectVal || autoSelectName) {
+                let match = Array.from(districtSelect.options).find(o => 
+                    (autoSelectVal && o.value === autoSelectVal) || 
+                    (autoSelectName && o.dataset.name && o.dataset.name.toLowerCase() === autoSelectName.toLowerCase())
+                );
+                if (match) {
+                    districtSelect.value = match.value;
+                    districtNameInput.value = match.dataset.name || match.text;
+                    districtInput.value = districtNameInput.value;
+                    loadVillages(match.value, oldVillageVal, oldVillageName);
+                }
+            }
+        } catch (err) {
+            console.error('Gagal memuat kecamatan:', err);
+            districtSelect.innerHTML = '<option value="" disabled selected>Gagal memuat kecamatan. Coba lagi.</option>';
+        } finally {
+            if (districtLoading) districtLoading.style.display = 'none';
+            showGlobalLoading(false);
+        }
+    }
+
+    // Load Daftar Desa/Kelurahan berdasarkan Kecamatan
+    async function loadVillages(districtId, autoSelectVal = '', autoSelectName = '') {
+        if (!villageSelect) return;
+        villageSelect.disabled = true;
+        villageSelect.classList.add('region-select-loading');
+        villageSelect.innerHTML = '<option value="" disabled selected>Memuat daftar desa/kelurahan...</option>';
+        if (villageLoading) villageLoading.style.display = 'inline-block';
+        showGlobalLoading(true);
+
+        try {
+            const data = await fetchApi('/api/wilayah/villages/' + encodeURIComponent(districtId));
+            villageSelect.innerHTML = '<option value="" disabled selected>Pilih Desa / Kelurahan</option>';
+
+            data.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.id;
+                opt.textContent = item.name;
+                opt.dataset.name = item.name;
+                villageSelect.appendChild(opt);
+            });
+
+            villageSelect.disabled = false;
+            villageSelect.classList.remove('region-select-loading');
+
+            if (autoSelectVal || autoSelectName) {
+                let match = Array.from(villageSelect.options).find(o => 
+                    (autoSelectVal && o.value === autoSelectVal) || 
+                    (autoSelectName && o.dataset.name && o.dataset.name.toLowerCase() === autoSelectName.toLowerCase())
+                );
+                if (match) {
+                    villageSelect.value = match.value;
+                    villageNameInput.value = match.dataset.name || match.text;
+                    villageInput.value = villageNameInput.value;
+                }
+            }
+        } catch (err) {
+            console.error('Gagal memuat desa/kelurahan:', err);
+            villageSelect.innerHTML = '<option value="" disabled selected>Gagal memuat desa/kelurahan. Coba lagi.</option>';
+        } finally {
+            if (villageLoading) villageLoading.style.display = 'none';
+            showGlobalLoading(false);
+        }
+    }
+
+    function resetDistrict() {
+        if (!districtSelect) return;
+        districtSelect.disabled = true;
+        districtSelect.innerHTML = '<option value="" disabled selected>Pilih Kab/Kota terlebih dahulu</option>';
+        districtNameInput.value = '';
+        districtInput.value = '';
+    }
+
+    function resetVillage() {
+        if (!villageSelect) return;
+        villageSelect.disabled = true;
+        villageSelect.innerHTML = '<option value="" disabled selected>Pilih Kecamatan terlebih dahulu</option>';
+        villageNameInput.value = '';
+        villageInput.value = '';
+    }
+
+    // Event Listeners Pergantian Dropdown (Pengguna dapat mengubah pilihan kapan saja)
+    if (provinceSelect) {
+        provinceSelect.addEventListener('change', function () {
+            const selected = provinceSelect.options[provinceSelect.selectedIndex];
+            if (selected && selected.value) {
+                provinceNameInput.value = selected.dataset.name || selected.text;
+                provinceInput.value = provinceNameInput.value;
+                loadRegencies(selected.value);
+            } else {
+                provinceNameInput.value = '';
+                provinceInput.value = '';
+                if (regencySelect) {
+                    regencySelect.disabled = true;
+                    regencySelect.innerHTML = '<option value="" disabled selected>Pilih Provinsi terlebih dahulu</option>';
+                }
+                resetDistrict();
+                resetVillage();
+            }
+        });
+    }
+
+    if (regencySelect) {
+        regencySelect.addEventListener('change', function () {
+            const selected = regencySelect.options[regencySelect.selectedIndex];
+            if (selected && selected.value) {
+                regencyNameInput.value = selected.dataset.name || selected.text;
+                regencyInput.value = regencyNameInput.value;
+                loadDistricts(selected.value);
+            } else {
+                regencyNameInput.value = '';
+                regencyInput.value = '';
+                resetDistrict();
+                resetVillage();
+            }
+        });
+    }
+
+    if (districtSelect) {
+        districtSelect.addEventListener('change', function () {
+            const selected = districtSelect.options[districtSelect.selectedIndex];
+            if (selected && selected.value) {
+                districtNameInput.value = selected.dataset.name || selected.text;
+                districtInput.value = districtNameInput.value;
+                loadVillages(selected.value);
+            } else {
+                districtNameInput.value = '';
+                districtInput.value = '';
+                resetVillage();
+            }
+        });
+    }
+
+    if (villageSelect) {
+        villageSelect.addEventListener('change', function () {
+            const selected = villageSelect.options[villageSelect.selectedIndex];
+            if (selected && selected.value) {
+                villageNameInput.value = selected.dataset.name || selected.text;
+                villageInput.value = villageNameInput.value;
+            } else {
+                villageNameInput.value = '';
+                villageInput.value = '';
+            }
+        });
+    }
+
+    // Inisialisasi awal pemuatan provinsi
+    initProvinces();
+
+    // Validasi & Sinkronisasi Lokasi sebelum Submit Form
+    if (formPengaduan) {
+        formPengaduan.addEventListener('submit', function (e) {
+            // Validasi dropdown wajib
+            if (provinceSelect && !provinceSelect.value) {
+                e.preventDefault();
+                alert('Silakan pilih Provinsi lokasi kejadian kebakaran.');
+                provinceSelect.focus();
+                return false;
+            }
+            if (regencySelect && !regencySelect.value) {
+                e.preventDefault();
+                alert('Silakan pilih Kabupaten atau Kota lokasi kejadian kebakaran.');
+                regencySelect.focus();
+                return false;
+            }
+            if (districtSelect && !districtSelect.value) {
+                e.preventDefault();
+                alert('Silakan pilih Kecamatan lokasi kejadian kebakaran.');
+                districtSelect.focus();
+                return false;
+            }
+            if (villageSelect && !villageSelect.value) {
+                e.preventDefault();
+                alert('Silakan pilih Desa atau Kelurahan lokasi kejadian kebakaran.');
+                villageSelect.focus();
+                return false;
+            }
+
+            // Susun teks lokasi kejadian
+            const detailText = locationDetail ? locationDetail.value.trim() : '';
+            if (detailText) {
+                if (incidentLocation) incidentLocation.value = detailText;
+            } else {
+                const parts = [];
+                if (villageNameInput && villageNameInput.value) parts.push('Desa ' + villageNameInput.value);
+                if (districtNameInput && districtNameInput.value) parts.push('Kec. ' + districtNameInput.value);
+                if (regencyNameInput && regencyNameInput.value) parts.push(regencyNameInput.value);
+                if (provinceNameInput && provinceNameInput.value) parts.push(provinceNameInput.value);
+                if (incidentLocation) incidentLocation.value = parts.join(', ');
+            }
+        });
+    }
+
+    // GPS Geolocation Handler (Tetap dipertahankan)
     const btnGetGps = document.getElementById('btnGetGps');
     const latInput = document.getElementById('latitude');
     const lonInput = document.getElementById('longitude');

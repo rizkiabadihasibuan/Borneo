@@ -424,21 +424,21 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         rawHotspots.forEach(function (pt) {
-            // Validasi ketat koordinat numerik
-            const lat = Number(pt.latitude);
-            const lon = Number(pt.longitude);
+            // Validasi ketat koordinat numerik (field baru: la=latitude, lo=longitude)
+            const lat = Number(pt.la);
+            const lon = Number(pt.lo);
             if (isNaN(lat) || isNaN(lon)) return;
 
-            // Filter provinsi jika bukan 'all'
+            // Filter provinsi jika bukan 'all' (field baru: p=province)
             if (filterRegion !== 'all') {
                 const targetName = regionBounds[filterRegion] ? regionBounds[filterRegion].name : '';
-                if (targetName && pt.province !== targetName) {
+                if (targetName && pt.p !== targetName) {
                     return;
                 }
             }
 
             filteredCount++;
-            const color = getConfidenceColor(pt.confidence);
+            const color = getConfidenceColor(pt.c); // c=confidence
 
             const circleMarker = L.circleMarker([lat, lon], {
                 radius: 7,
@@ -450,14 +450,12 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             // Format Popup Detail yang informatif dan aman (XSS-safe)
-            const popupTime = pt.acq_formatted 
-                ? escapeHtml(pt.acq_formatted) 
-                : (pt.acq_date ? escapeHtml(pt.acq_date) + (pt.acq_time ? ' ' + escapeHtml(pt.acq_time) + ' UTC' : '') : 'Informasi waktu tidak tersedia');
+            const popupTime = pt.t ? escapeHtml(pt.t) : 'Informasi waktu tidak tersedia';
 
             const popupContent = `
                 <div style="padding: 1rem 1.15rem; min-width: 230px;">
                     <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-forest-moss); font-weight: 700; margin-bottom: 0.25rem;">
-                        ${escapeHtml(pt.province || 'Pulau Kalimantan')}
+                        ${escapeHtml(pt.p || 'Pulau Kalimantan')}
                     </div>
                     <div style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; color: var(--color-deep-forest); margin-bottom: 0.65rem;">
                         Titik Panas Satelit
@@ -465,11 +463,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div style="display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.82rem; color: #4A544C;">
                         <div><strong>Koordinat:</strong> ${lat.toFixed(4)}, ${lon.toFixed(4)}</div>
                         <div><strong>Waktu Observasi:</strong> ${popupTime}</div>
-                        <div><strong>Instrumen / Satelit:</strong> ${escapeHtml(pt.instrument || 'Sensor VIIRS')} (${escapeHtml(pt.satellite || 'Satelit')})</div>
-                        <div><strong>Kepercayaan:</strong> <span style="font-weight: 600; color: ${color};">${escapeHtml(pt.confidence || 'Nominal')}</span></div>
-                        ${(pt.frp !== null && pt.frp !== undefined) ? `<div><strong>FRP (Energi Radiasi):</strong> ${escapeHtml(pt.frp)} MW</div>` : ''}
-                        ${(pt.brightness !== null && pt.brightness !== undefined) ? `<div><strong>Suhu Kecerahan:</strong> ${escapeHtml(pt.brightness)} K</div>` : ''}
-                        ${pt.daynight ? `<div><strong>Lintasan:</strong> ${escapeHtml(pt.daynight)}</div>` : ''}
+                        <div><strong>Instrumen / Satelit:</strong> ${escapeHtml(pt.i || 'Sensor VIIRS')} (${escapeHtml(pt.s || 'Satelit')})</div>
+                        <div><strong>Kepercayaan:</strong> <span style="font-weight: 600; color: ${color};">${escapeHtml(pt.c || 'Nominal')}</span></div>
+                        ${(pt.f !== null && pt.f !== undefined) ? `<div><strong>FRP (Energi Radiasi):</strong> ${escapeHtml(pt.f)} MW</div>` : ''}
+                        ${(pt.b !== null && pt.b !== undefined) ? `<div><strong>Suhu Kecerahan:</strong> ${escapeHtml(pt.b)} K</div>` : ''}
+                        ${pt.d ? `<div><strong>Lintasan:</strong> ${escapeHtml(pt.d)}</div>` : ''}
                     </div>
                     <div style="margin-top: 0.65rem; padding-top: 0.5rem; border-top: 1px solid rgba(0,0,0,0.06); font-size: 0.72rem; color: #7A867C;">
                         * Estimasi wilayah berbasis koordinat regional

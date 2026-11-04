@@ -24,9 +24,9 @@ class PantauanKarhutlaController extends Controller
      */
     public function index(Request $request): View
     {
-        $days = (int) $request->get('days', 1);
+        $days = (int) $request->get('days', 7);
         if ($days < 1 || $days > 7) {
-            $days = 1;
+            $days = 7;
         }
 
         $firmsData = $this->hotspotService->getKalimantanHotspots($days);
@@ -44,9 +44,9 @@ class PantauanKarhutlaController extends Controller
      */
     public function apiData(Request $request): JsonResponse
     {
-        $days = (int) $request->get('days', 1);
+        $days = (int) $request->get('days', 7);
         if ($days < 1 || $days > 7) {
-            $days = 1;
+            $days = 7;
         }
 
         $firmsData = $this->hotspotService->getKalimantanHotspots($days);

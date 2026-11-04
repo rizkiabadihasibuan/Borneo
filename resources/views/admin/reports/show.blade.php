@@ -19,8 +19,10 @@
             <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
                 @php
                     $locationDetails = [];
-                    if ($report->village) $locationDetails[] = "Desa " . $report->village;
-                    if ($report->district) $locationDetails[] = "Kec. " . $report->district;
+                    $villageName = $report->village_name ?: $report->village;
+                    $districtName = $report->district_name ?: $report->district;
+                    if ($villageName) $locationDetails[] = "Desa " . $villageName;
+                    if ($districtName) $locationDetails[] = "Kec. " . $districtName;
                     $locationText = count($locationDetails) > 0 ? implode(', ', $locationDetails) : null;
 
                     $waGroupLines = [
@@ -37,15 +39,15 @@
                         "⏱️ *WAKTU LAPOR:* " . ($report->incident_time ? $report->incident_time->format('d/m/Y H:i') . ' WIB' : 'Baru saja'),
                         "",
                         "📍 *LOKASI KEJADIAN:*",
-                        "🏛️ Provinsi: *" . $report->province . "*",
-                        "🏢 Kab/Kota: *" . $report->regency . "*",
+                        "🏛️ Provinsi: *" . ($report->province_name ?: $report->province) . "*",
+                        "🏢 Kab/Kota: *" . ($report->regency_name ?: $report->regency) . "*",
                     ];
 
                     if ($locationText) {
                         $waGroupLines[] = "🏘️ Wilayah: *" . $locationText . "*";
                     }
 
-                    $waGroupLines[] = "🧭 Alamat/Patokan: " . $report->incident_location;
+                    $waGroupLines[] = "🧭 Alamat/Patokan: " . ($report->location_detail ?: $report->incident_location);
 
                     if ($report->latitude && $report->longitude) {
                         $lat = number_format($report->latitude, 5);
@@ -189,20 +191,65 @@
 
                         <div style="border-top: 1px solid var(--color-border-subtle); padding-top: 1.25rem; margin-bottom: 1.25rem;">
                             <span style="font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; color: #7F8B83; font-weight: 600; display: block; margin-bottom: 0.4rem;">
-                                Lokasi Administratif & Patokan Lapangan
+                                Hierarki Wilayah Administratif & Lokasi Kejadian
                             </span>
                             <div style="background: #FAF9F5; border: 1px solid var(--color-border-subtle); border-radius: 8px; padding: 1rem;">
-                                <div style="font-weight: 600; color: var(--color-deep-forest); font-size: 0.95rem; margin-bottom: 0.35rem;">
-                                    {{ $report->village ? 'Desa ' . $report->village . ', ' : '' }}
-                                    {{ $report->district ? 'Kec. ' . $report->district . ', ' : '' }}
-                                    {{ $report->regency }}, {{ $report->province }}
+                                
+                                <!-- Grid 4 Tingkat Wilayah Administratif -->
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.85rem; margin-bottom: 0.85rem; padding-bottom: 0.85rem; border-bottom: 1px solid rgba(41,45,41,0.08);">
+                                    <div>
+                                        <span style="font-size: 0.72rem; text-transform: uppercase; color: #6D7870; font-weight: 600; display: block;">1. Provinsi</span>
+                                        <div style="font-weight: 600; font-size: 0.9rem; color: var(--color-deep-forest);">
+                                            {{ $report->province_name ?: $report->province }}
+                                        </div>
+                                        @if($report->province_code)
+                                            <span style="font-family: monospace; font-size: 0.72rem; color: #768378;">Kode: {{ $report->province_code }}</span>
+                                        @endif
+                                    </div>
+
+                                    <div>
+                                        <span style="font-size: 0.72rem; text-transform: uppercase; color: #6D7870; font-weight: 600; display: block;">2. Kab / Kota</span>
+                                        <div style="font-weight: 600; font-size: 0.9rem; color: var(--color-deep-forest);">
+                                            {{ $report->regency_name ?: $report->regency }}
+                                        </div>
+                                        @if($report->regency_code)
+                                            <span style="font-family: monospace; font-size: 0.72rem; color: #768378;">Kode: {{ $report->regency_code }}</span>
+                                        @endif
+                                    </div>
+
+                                    <div>
+                                        <span style="font-size: 0.72rem; text-transform: uppercase; color: #6D7870; font-weight: 600; display: block;">3. Kecamatan</span>
+                                        <div style="font-weight: 600; font-size: 0.9rem; color: var(--color-deep-forest);">
+                                            {{ $report->district_name ?: ($report->district ? 'Kec. ' . $report->district : '-') }}
+                                        </div>
+                                        @if($report->district_code)
+                                            <span style="font-family: monospace; font-size: 0.72rem; color: #768378;">Kode: {{ $report->district_code }}</span>
+                                        @endif
+                                    </div>
+
+                                    <div>
+                                        <span style="font-size: 0.72rem; text-transform: uppercase; color: #6D7870; font-weight: 600; display: block;">4. Desa / Kelurahan</span>
+                                        <div style="font-weight: 600; font-size: 0.9rem; color: var(--color-deep-forest);">
+                                            {{ $report->village_name ?: ($report->village ? 'Desa ' . $report->village : '-') }}
+                                        </div>
+                                        @if($report->village_code)
+                                            <span style="font-family: monospace; font-size: 0.72rem; color: #768378;">Kode: {{ $report->village_code }}</span>
+                                        @endif
+                                    </div>
                                 </div>
-                                <div style="font-size: 0.88rem; color: #4B5563; line-height: 1.5;">
-                                    {{ $report->incident_location }}
+
+                                <!-- Detail Patokan Lokasi -->
+                                <div>
+                                    <span style="font-size: 0.72rem; text-transform: uppercase; color: #6D7870; font-weight: 600; display: block; margin-bottom: 0.2rem;">
+                                        5. Detail Patokan Lokasi Kejadian
+                                    </span>
+                                    <div style="font-size: 0.88rem; color: #2B332D; line-height: 1.5; font-weight: 500;">
+                                        {{ $report->location_detail ?: $report->incident_location }}
+                                    </div>
                                 </div>
 
                                 @if($report->latitude && $report->longitude)
-                                    <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed rgba(41,45,41,0.15); display: flex; align-items: center; justify-content: space-between; flex-wrap: gap; gap: 0.5rem;">
+                                    <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed rgba(41,45,41,0.15); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
                                         <span style="font-family: monospace; font-size: 0.82rem; color: #526B4D;">
                                             GPS: {{ number_format($report->latitude, 5) }}, {{ number_format($report->longitude, 5) }}
                                         </span>

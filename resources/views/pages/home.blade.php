@@ -306,7 +306,18 @@
         @if(!empty($latestNews) && count($latestNews) > 0)
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
                 @foreach($latestNews as $item)
-                    <article style="background: #FFFFFF; border: 1px solid var(--color-border-subtle); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.03); transition: transform 0.2s ease, box-shadow 0.2s ease;">
+                    <article style="background: #FFFFFF; border: 1px solid var(--color-border-subtle); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.03); transition: transform 0.2s ease, box-shadow 0.2s ease;">
+                        <!-- Gambar Thumbnail -->
+                        <div style="height: 160px; overflow: hidden; position: relative;">
+                            <img src="{{ $item['image'] ?? asset('images/news-karhutla-fire.jpg') }}"
+                                 alt="Ilustrasi berita karhutla"
+                                 loading="lazy"
+                                 onerror="this.src='{{ asset('images/news-karhutla-fire.jpg') }}'"
+                                 style="width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.35s ease;"
+                                 onmouseover="this.style.transform='scale(1.04)'"
+                                 onmouseout="this.style.transform='scale(1)'">
+                        </div>
+                        <div style="padding: 1.25rem 1.5rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
                         <div>
                             <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 0.85rem; font-size: 0.76rem;">
                                 <span style="font-weight: 700; color: var(--color-forest-moss); text-transform: uppercase; letter-spacing: 0.06em;">
@@ -340,6 +351,7 @@
                                 <span>Baca Sumber</span>
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                             </a>
+                        </div>
                         </div>
                     </article>
                 @endforeach

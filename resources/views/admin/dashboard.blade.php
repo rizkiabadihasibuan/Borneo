@@ -168,9 +168,17 @@
                                         {{ $report->incident_type }}
                                     </td>
                                     <td style="padding: 1rem 1rem; color: #4B5563;">
-                                        <span style="font-weight: 500; display: block; color: var(--color-charcoal);">{{ $report->regency }}, {{ $report->province }}</span>
+                                        <span style="font-weight: 500; display: block; color: var(--color-charcoal);">
+                                            {{ $report->regency_name ?: $report->regency }}, {{ $report->province_name ?: $report->province }}
+                                        </span>
                                         <span style="font-size: 0.78rem; color: #6B7280; display: block; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                            {{ $report->incident_location }}
+                                            @if($report->village_name || $report->village)
+                                                Desa {{ $report->village_name ?: $report->village }},
+                                            @endif
+                                            @if($report->district_name || $report->district)
+                                                Kec. {{ $report->district_name ?: $report->district }} •
+                                            @endif
+                                            {{ $report->location_detail ?: $report->incident_location }}
                                         </span>
                                     </td>
                                     <td style="padding: 1rem 1rem; color: #6D7870; font-size: 0.82rem;">
